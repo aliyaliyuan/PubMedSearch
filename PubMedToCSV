@@ -1,0 +1,191 @@
+import requests
+import xml.etree.ElementTree as ET
+import time
+import csv
+
+#Creates a master list that all functions add to 
+PMIDs = []
+
+#gets PMIDs based on key words search, have to paginate because of 10000 limit
+# Extracts all PMIDs with key words and published AFTER 04/30/2022
+def get_all_PMIDS(query, db="pubmed", retmax=10000, email=None, tool=None):
+    #Create empty list
+    PMID_List = []
+    #Initialize retstart
+    retstart = 0
+    #Esearch URL
+    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+    
+    #While loop to paginate
+    while True:
+        params = {
+            "db" : db,
+            "term" : query,
+            "retstart" : retstart,
+            "retmax" : retmax,
+            "retmode" : "xml",
+            "mindate" : "2022/05/01",
+            "maxdate" : "3000",
+            "datetype" : "pdat"
+
+        }
+
+        if email:
+            params["email"] = email
+        if tool:
+            params["tool"] = tool
+
+        #Acquires data from Esearch
+        response = requests.get(url, params=params)
+        #Scrapes data
+        root = ET.fromstring(response.content)
+
+        #For every element found in root, scrapes from IDList/Id
+        pmids = [ID.text for ID in root.findall(".//IdList/Id")]
+        if not pmids:
+            break
+        
+        #adds all of pmids to the end of PMID_List
+        PMID_List.extend(pmids)
+
+        #retstart gradually increases by a factor of retmax
+        retstart += retmax
+        
+        #NCBI Rate Limit
+        time.sleep(0.34) #maximum 3 requests per second
+
+        #Counts the number of article IDs identified and added to the list 
+        counter = root.find("Count")
+        if counter is not None:
+            total_count = int(counter.text)
+            if retstart >= total_count:
+                break 
+
+    #Adds all PMIDs to the master list 
+    for element in PMID_List:
+        PMIDs.append(element)
+
+    #prints number of PMIDs collected 
+    print(f"Total PMIDs collected: {len(PMID_List)}")
+    return PMID_List
+
+#Creates a list of key words to search 
+key_words = ["cell surface proteins AND mass spectrometry", 
+             "cell surface proteomics",
+             "cell surface glycoproteins AND mass spectrometry",
+             "plasma membrane AND mass spectrometry",
+             "cell surface AND mass spectrometry",
+             "plasma membrane proteome", 
+             "cell surface proteome",
+             "surfaceome"
+             ]
+
+#Calls the function that finds PMIDs based on key words
+for word in key_words:
+    get_all_PMIDS(word, db="pubmed", retmax=10000, email=None, tool=None)
+
+
+## Getting all PMIDs that reference PMID 19349973 from 2022/05/01 to now
+
+def get_all_PMIDS_ref(query_ref, email=None, tool=None):
+    PMIDS_ref = []
+    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi"
+    
+    params = {
+        "dbfrom": "pubmed",
+        "linkname": "pubmed_pubmed_citedin",
+        "id": query_ref,
+        "retmode": "xml",
+        "mindate" : "2022/05/01",
+        "maxdate" : "3000"
+    }
+    
+    if email:
+        params["email"] = email
+    if tool:
+        params["tool"] = tool
+
+    response = requests.get(url, params=params)
+    root = ET.fromstring(response.content)
+
+    PMIDS_ref = [id_tag.text for id_tag in root.findall(".//Link/Id")]
+    
+    for element in PMIDS_ref:
+        PMIDs.append(element)
+    return PMIDS_ref
+
+#calls function that gets all the PMIDs from PMID 19349973
+
+pmids_ref = get_all_PMIDS_ref("19349973", None, None)
+
+for element in pmids_ref:
+    print(element)
+
+
+#Saving list of PMIDs to verify later with manual searching for numbers
+
+with open('/Users/aliyahaas/Desktop/PMIDs.txt', 'w') as f:
+    for x in PMIDs:
+        f.write( '%s/n' %x)
+    print("File written successfully")
+
+f.close()
+
+
+## Extract metadata for the PMIDs (author, title, date, PMID), put into csv? 
+
+def get_metadata(pmids, db = "pubmed", batch_size = 200):
+    url_meta = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+    all_meta = []
+
+    for i in range(0, len(pmids), batch_size):
+        batch = pmids[i:i+batch_size]
+        params_meta = {
+            "db" : db,
+            "retmode" : "json",
+            "id" : ",".join(batch)
+        }
+    
+        response = requests.get(url_meta, params = params_meta)
+        if response.status_code != 200:
+            print ("Error: " + response.status_code)
+            print (response.text)
+            continue
+
+        try:
+            data = response.json()
+        except ValueError: 
+            print ("Could not read JSON")
+            continue
+
+        summaries = data["result"]
+        for item in batch:
+            if item in summaries:
+                id = summaries[item]
+                metadata = {
+                    "PMID" : item,
+                    "Title" : id.get("title", ""),
+                    "Authors" : ", ".join([au["name"] for au in id.get("authors", [])]),
+                    "PubDate" : id.get("pubdate",""),
+                    "Journal" : id.get("fulljournalname", "")
+                }
+                all_meta.append(metadata)
+
+        time.sleep(0.34)
+
+    return all_meta
+
+    
+
+
+final = get_metadata(PMIDs)
+
+with open("/Users/aliyahaas/Desktop/PubMed_Metadata.csv", "w", newline="") as f:
+    writer = csv.DictWriter(f, fieldnames=["PMID", "Title", "Authors", "PubDate", "Journal"])
+    writer.writeheader()
+    writer.writerows(final)
+
+print("Metadata saved to PubMed_Metadata.csv")
+
+
+
