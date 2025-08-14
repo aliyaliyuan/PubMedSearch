@@ -14,8 +14,6 @@ DATE_FILE_PATH = "/path/to/last_date.txt"
 LOG_PATH = "/path/to/pubmed_log.txt"
 
 # Airtable Configuration
-#API_KEY = "patgPS8r0iILjg60V.b021a6cc23dd2345faa70bbd0df0003590c9a86af798914d49d013ee056591fa"
-#changed to RG's
 API_KEY = "INSERT_API_KEY"
 BASE_ID = "appXXX"
 TABLE_ID = "tblXXX"
