@@ -26,7 +26,6 @@ Below is a step-by-step tutorial on how to obtain your own personal access key
 
 6. Click "Add Base" and select the base you want this application to write/update to
 
-![p4](https://github.com/user-attachments/assets/567fa137-fad8-43e3-bac5-193d815a3c36)
 
 7. Copy the token and put it somewhere secure
 
