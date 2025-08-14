@@ -11,26 +11,31 @@ Below is a step-by-step tutorial on how to obtain your own personal access key
 
 1. Go to https://airtable.com/create/tokens
 2. Select the blue "+ Create token" button to the right
+![p1](https://github.com/user-attachments/assets/5f310f76-bbff-470d-b0b7-cd331f24fa2d)
 
-![p1](https://github.com/user-attachments/assets/fc903878-2eab-4a70-9f89-97fc1043610e)
 
 3. Name your token
-![p2](https://github.com/user-attachments/assets/039338b5-a2e9-43b9-84f4-16ca3e7e4aac)
+
+![p2](https://github.com/user-attachments/assets/faf5f3ab-748c-4a52-a380-4f289298c8da)
+
 
 4. Click "Add Scope" and add as many permissions as possible
-![p3](https://github.com/user-attachments/assets/7edff919-a30c-4df2-932a-9abeaa753f8b)
 
-5. Click "Add Base" and select the base you want this application to write/update to
-![p4](https://github.com/user-attachments/assets/26d427d1-3d2b-4a4c-a85a-a889d64e3c33)
+   ![p3](https://github.com/user-attachments/assets/a6c19043-34cf-464a-9dac-e46f6299d120)
 
-6. Copy the token and put it somewhere secure
 
-7. Go into PubMedSearch.py in this repo and change API_KEY to your new token
+6. Click "Add Base" and select the base you want this application to write/update to
 
-8. Change BASE_ID and TABLE_ID to your base ID and table ID (it's in the url of the table when you are accessing it)
+![p4](https://github.com/user-attachments/assets/567fa137-fad8-43e3-bac5-193d815a3c36)
+
+7. Copy the token and put it somewhere secure
+
+8. Go into PubMedSearch.py in this repo and change API_KEY to your new token
+
+9. Change BASE_ID and TABLE_ID to your base ID and table ID (it's in the url of the table when you are accessing it)
    I.E. In https://airtable.com/app123b/tbl3452/viwKSO "app123b" is the BASE_ID and "tbl435w" is the TABLE_ID
 
-9. Now, you may run "python PubMedSearch.py"
+10. Now, you may run "python PubMedSearch.py"
     
 11. It creates a log.txt file to keep the last date it was updated. This means the next time you run the code, it will search for articles AFTER the last time you updated.
 
